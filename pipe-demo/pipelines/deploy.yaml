@@ -83,8 +83,10 @@ stages:
                     ScriptType: 'Inline Script'
                     InlineScript: 'npm install'
 
-  - stage: buildQa
+  - stage: buildQA
     displayName: 'Build React App'
+    dependsOn: deployDev
+    condition: succeeded()
 
     jobs:
       - job: 'build'
@@ -120,7 +122,7 @@ stages:
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).QA.zip'
 
-  - stage: deployQa
+  - stage: buildQA
     displayName: 'Deploy QA'
     dependsOn: deployDev
     condition: succeeded()
@@ -146,8 +148,9 @@ stages:
                     ConnectionType: AzureRM
                     azureSubscription: '$(azureSubscription)'
                     appType: webAppLinux
-                    WebAppName: '$(webAppNameQA)'
+                    WebAppName: '$(webAppNameQa)'
                     packageForLinux: '$(System.ArtifactsDirectory)/drop/$(Build.BuildId).QA.zip'
                     StartupCommand: 'node index.js'
                     ScriptType: 'Inline Script'
                     InlineScript: 'npm install'
+                    
