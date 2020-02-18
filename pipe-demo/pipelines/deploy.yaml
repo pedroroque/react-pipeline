@@ -77,7 +77,7 @@ stages:
                     ConnectionType: AzureRM
                     azureSubscription: '$(azureSubscription)'
                     appType: webAppLinux
-                    WebAppName: '$(serverWebAppName)'
+                    WebAppName: '$(webAppNameDev)'
                     packageForLinux: '$(System.ArtifactsDirectory)/drop/$(Build.BuildId).dev.zip'
                     StartupCommand: 'node index.js'
                     ScriptType: 'Inline Script'
