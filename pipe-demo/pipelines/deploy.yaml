@@ -77,9 +77,77 @@ stages:
                     ConnectionType: AzureRM
                     azureSubscription: '$(azureSubscription)'
                     appType: webAppLinux
-                    WebAppName: '$(serverWebAppName)'
+                    WebAppName: '$(webAppNameDev)'
                     packageForLinux: '$(System.ArtifactsDirectory)/drop/$(Build.BuildId).dev.zip'
                     StartupCommand: 'node index.js'
                     ScriptType: 'Inline Script'
                     InlineScript: 'npm install'
-                    
+
+  - stage: buildQa
+    displayName: 'Build React App'
+
+    jobs:
+      - job: 'build'
+        variables:
+          REACT_APP_HELLO: 'Running on QA'
+        steps:
+          - task: NodeTool@0
+            inputs: 
+              versionSpec: '10.x'
+        
+          - script: |
+              cd $(srcFolder)
+              npm install
+              npm run build          
+            displayName: 'Install and Build'
+
+          - task: CopyFiles@2
+            displayName: 'Copy build output'
+            inputs:
+              SourceFolder: '$(srcFolder)/build'
+              Contents: '**/*'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive output'
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).QA.zip'
+              includeRootFolder: false
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).QA.zip'
+
+  - stage: deployQa
+    displayName: 'Deploy QA'
+    dependsOn: deployDev
+    condition: succeeded()
+
+    jobs:
+      - deployment: deploy
+        displayName: Deploy to QA
+        environment: 'QA'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadPipelineArtifact@2
+                  displayName: "Downloading build artifacts"
+                  inputs:
+                    buildType: current
+                    targetPath: '$(System.ArtifactsDirectory)'
+
+                - task: AzureRmWebAppDeployment@4
+                  inputs:
+                    ConnectionType: AzureRM
+                    azureSubscription: '$(azureSubscription)'
+                    appType: webAppLinux
+                    WebAppName: '$(webAppNameQA)'
+                    packageForLinux: '$(System.ArtifactsDirectory)/drop/$(Build.BuildId).QA.zip'
+                    StartupCommand: 'node index.js'
+                    ScriptType: 'Inline Script'
+                    InlineScript: 'npm install'
