@@ -122,9 +122,9 @@ stages:
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).QA.zip'
 
-  - stage: buildQA
+  - stage: deployQA
     displayName: 'Deploy QA'
-    dependsOn: deployDev
+    dependsOn: buildQA
     condition: succeeded()
 
     jobs:
@@ -153,4 +153,3 @@ stages:
                     StartupCommand: 'node index.js'
                     ScriptType: 'Inline Script'
                     InlineScript: 'npm install'
-                    
